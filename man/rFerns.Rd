@@ -54,6 +54,8 @@
 
 \references{
 Ozuysal M, Calonder M, Lepetit V & Fua P. (2010), \emph{Fast Keypoint Recognition using Random Ferns}, IEEE Transactions on Pattern Analysis and Machine Intelligence 32(3), 448-461.
+
+Kursa MB (2012), \emph{Random ferns method implementation for the general-purpose machine learning}, arXiv:1202.1121 [cs.LG].
 }
 
 \author{Miron B. Kursa \email{M.Kursa@icm.edu.pl}}

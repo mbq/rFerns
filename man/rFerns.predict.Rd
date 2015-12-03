@@ -10,7 +10,8 @@
 }
 \arguments{
   \item{object}{Object of a class \code{rFerns}; a model that will be used for prediction.}
-  \item{x}{Data frame containing attributes; must have corresponding names to training set (although order is not important) and do not introduce new factor levels.}
+  \item{x}{Data frame containing attributes; must have corresponding names to training set (although order is not important) and do not introduce new factor levels.
+   If this argument is not given, OOB predictions on the training set will be returned.}
   \item{scores}{If \code{TRUE}, the result will contain score matrix instead of simple predictions.}
   \item{...}{Additional parameters.}
 }
