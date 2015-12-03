@@ -1,3 +1,13 @@
+Changes in 2.0.0:
+ - Shadow importance.
+ - Roxygen documentation.
+ - Model merging for parallel, batch and deeply traceable training.
+ - Fixed a minor error in leaf score calculation (basically redundant
+ to the model performance). Thanks to Mateusz Fedoryszak for spotting
+ this.
+ - Fixed OOB predictions returned by predict(), which are now always
+ data.frame, even in the multi-label case.
+
 Changes in 1.1.0:
  - Code portability fixes.
  - predict method returns OOB results for no input data even when fern

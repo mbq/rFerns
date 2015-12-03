@@ -1,27 +1,24 @@
-all: testgprof test testslow testmulti testllvm testllvm3 testllvmm
+all: testgprof test testslow testllvm testllvm3 testllvmm
 
-testllvm3: test.c ../src/fern.h ../src/tools.h ../src/forest.h
-	clang -o $@ $< -lm -O3 -g 
+testllvm3: test.c ../src/fern.h ../src/tools.h ../src/forest.h iris.h
+	clang -o $@ $< -lm -O3 -g
 
-testllvm: test.c ../src/fern.h ../src/tools.h ../src/forest.h
+testllvm: test.c ../src/fern.h ../src/tools.h ../src/forest.h iris.h
 	clang -o $@ $< -lm -O0 -g
 
-testllvmm: test.c 
-	clang -o $@ $< -lm -O3 -g -fsanitize=address -fno-omit-frame-pointer
+testllvmm: test.c ../src/fern.h ../src/tools.h ../src/forest.h iris.h
+	clang -o $@ $< -lm -O0 -g -fsanitize=address -fno-omit-frame-pointer
 
-testgprof: test.c ../src/fern.h ../src/tools.h ../src/forest.h
+testgprof: test.c ../src/fern.h ../src/tools.h ../src/forest.h iris.h
 	gcc -o $@ $< --std=c99 -lm -O3 -g -pg
 
-test: test.c ../src/fern.h ../src/tools.h ../src/forest.h
+test: test.c ../src/fern.h ../src/tools.h ../src/forest.h iris.h
 	gcc -o $@ $< --std=c99 -lm -O3 -g
 
-testmulti: test-multi.c ../src/fern.h ../src/tools.h ../src/forest.h
-	gcc -o $@ $< --std=c99 -lm -g
-
-testsse: test.c ../src/fern.h ../src/tools.h ../src/forest.h
+testsse: test.c ../src/fern.h ../src/tools.h ../src/forest.h iris.h
 	gcc -o $@ $< --std=c99 -lm -O3 -g -ftree-vectorize -msse2 -ftree-vectorizer-verbose=5
 
-testslow: test.c ../src/fern.h ../src/tools.h ../src/forest.h
+testslow: test.c ../src/fern.h ../src/tools.h ../src/forest.h iris.h
 	gcc -o $@ $< --std=c99 -lm -g
 
 .PHONY: clean

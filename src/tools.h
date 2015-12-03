@@ -1,6 +1,6 @@
 /*   Shared C code
 
-  Copyright 2011-2014 Miron B. Kursa
+  Copyright 2011-2015 Miron B. Kursa
 
   This file is part of rFerns R package.
 
@@ -10,11 +10,15 @@
 */
 
 #include <stdint.h>
+#include <limits.h>
+#include <assert.h>
 
 typedef uint32_t uint;
 typedef uint32_t mask;
 typedef int32_t sint;
 typedef double score_t;
+
+#define MAX_D 16
 
 //Structs
 struct parameters{
@@ -27,6 +31,7 @@ struct parameters{
  uint calcImp;
  uint holdForest;
  uint multilabel;
+ uint consSeed;
 };
 typedef struct parameters params;
 #define PARAMS_ params *P
@@ -35,6 +40,13 @@ typedef struct parameters params;
 #define _SIMP numC,D,twoToD,multi
 #define _SIMPP _SIMP,numFerns
 #define _SIMPPQ(x) (x).numClasses,(x).D,(x).twoToD,(x).multilabel,(x).numFerns
+
+
+struct accLoss{
+ double direct;
+ double shadow;
+};
+typedef struct accLoss accLoss;
 
 union threshold{
  double value;
@@ -73,7 +85,8 @@ struct model{
  score_t *oobPreds;
  uint *oobOutOfBagC;
  double *imp;
- double *impSd;
+ double *shimp;
+ double *try;
 };
 typedef struct model model;
 
@@ -101,10 +114,16 @@ uint32_t __rintegerf(rng_t *rng){
 //Gives a number from 0 to upTo-1 (each value equally probable provided upTo is safely smaller than 1<<32)
 #define RINDEX(upTo) ((uint32_t)(RUNIF_OPEN*((double)upTo)))
 //Setting seed; give it two uint32s you like
-#define SETSEED(a,b) rng->z=a; rng->w=b
+#define SETSEED(a,b) rng->z=(a); rng->w=(b)
+#define LOADSEED(x) ((uint64_t*)rng)[0]=(x)
+#define DUMPSEED ((uint64_t*)rng)[0]
 #define RMASK(numCat) 1+RINDEX((1<<(numCat))-2)
 #define R_ rng_t *rng
 #define _R rng
+
+//Some bit fun
+#define SET_BIT(where,which,to) (((where)&(~(1<<(which))))|((to)<<(which)))
+#define GET_BIT(where,which) (((where)&(1<<(which)))>0)
 
 //Sync PRNG with R; R will feel only two numbers were generated
 #define EMERGE_R_FROM_R \

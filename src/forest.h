@@ -1,6 +1,6 @@
 /*   Code handling fern ensembles -- creation, prediction, OOB, accuracy...
 
-     Copyright 2011-2014 Miron B. Kursa
+     Copyright 2011-2015 Miron B. Kursa
 
      This file is part of rFerns R package.
 
@@ -8,50 +8,6 @@
  rFerns is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  You should have received a copy of the GNU General Public License along with rFerns. If not, see http://www.gnu.org/licenses/.
 */
-
-//TODO: Make it multi-label (mean Hanning distance increase or mean quotient increase for good classes or ...)
-double calcAccLoss(DATASET_,uint E,FERN_,uint *bag,uint *idx,score_t *curPreds,uint numC,uint D,R_,uint *idxC){
- uint count=0;
- double wrongDiff=0;
- for(uint e=0;e<N;e++)
-  idxC[e]=idx[e];
- for(uint e=0;e<D;e++)
-  if(splitAtts[e]==E){
-   switch(X[E].numCat){
-    case 0:{
-     //Numerical split
-     double *x=(double*)(X[E].x);
-     double threshold=thresholds[e].value;
-     for(uint ee=0;ee<N;ee++)
-      idxC[ee]=((idxC[ee])&(~(1<<e)))+(1<<e)*(x[RINDEX(N)]<threshold);
-     break;
-    }
-    case -1:{
-     //Integer split
-     sint *x=(sint*)(X[E].x);
-     sint threshold=thresholds[e].intValue;
-     for(uint ee=0;ee<N;ee++)
-      idxC[ee]=((idxC[ee])&(~(1<<e)))+(1<<e)*(x[RINDEX(N)]<threshold);
-     break;
-    }
-    default:{
-     //Categorical split
-     uint *x=(uint*)(X[E].x);
-     mask mask=thresholds[e].selection;
-     for(uint ee=0;ee<N;ee++)
-      idxC[ee]=((idxC[ee])&(~(1<<e)))+(1<<e)*((mask&(1<<(x[RINDEX(N)])))>0);
-    }
-   }
-  }
- for(uint e=0;e<N;e++){
-  wrongDiff+=
-    (!(bag[e]))*
-    (scores[idx[e]*numC+Y[e]]-scores[idxC[e]*numC+Y[e]]);
-  count+=!(bag[e]);
- }
-
- return(wrongDiff/((double)count));
-}
 
 double calcOobError(score_t *oobPredsAcc,uint *oobPredsC,uint *Y,uint N,uint numC,uint multi){
  uint wrong=0;
@@ -87,6 +43,7 @@ void killModel(model *x);
 model *makeModel(DATASET_,ferns *ferns,params *P,R_){
  uint numC=P->numClasses;
  uint D=P->D;
+ assert(D<=MAX_D);
  uint twoToD=P->twoToD;
  uint multi=P->multilabel;
 
@@ -109,18 +66,37 @@ model *makeModel(DATASET_,ferns *ferns,params *P,R_){
  uint *oobPredsC=ans->oobOutOfBagC;
 
  //Stuff for importance
- double *sumD=NULL; double *sumDD=NULL;
- uint *buf_idxC=NULL;
- ans->imp=NULL; ans->impSd=NULL;
- uint *useCount=NULL;
-
+ // double *sumD=NULL;
+ // double *sumDD=NULL;
+ uint *buf_idxPermA=NULL;
+ uint *buf_idxPermB=NULL;
+ uint64_t *rngStates=NULL;
+ //Actual importance result
+ ans->imp=NULL;
+ ans->shimp=NULL;
+ ans->try=NULL;
+ //Allocate if needed only
  if(P->calcImp){
-  ALLOCZ(sumD,double,nX);
-  ALLOCZ(sumDD,double,nX);
-  ALLOCZ(useCount,uint,nX);
+  // ALLOCZ(sumD,double,nX);
+  // ALLOCZ(sumDD,double,nX);
   ALLOCZ(ans->imp,double,nX);
-  ALLOCZ(ans->impSd,double,nX);
-  ALLOC(buf_idxC,uint,N);
+  ALLOCZ(ans->shimp,double,nX);
+  ALLOCZ(ans->try,double,nX);
+  ALLOC(buf_idxPermA,uint,N);
+  ALLOC(buf_idxPermB,uint,N);
+}
+
+if(P->calcImp==2){
+ //Initiate consistent rng buffer
+ uint64_t savedSeed=DUMPSEED;
+ uint64_t startSeed=P->consSeed;
+ LOADSEED(startSeed);
+ ALLOC(rngStates,uint64_t,nX);
+ for(uint e=0;e<nX;e++){
+  rngStates[e]=DUMPSEED;
+  for(uint ee=0;ee<N;ee++) RINTEGER;
+ }
+ LOADSEED(savedSeed);
 }
 
  /*
@@ -159,7 +135,7 @@ model *makeModel(DATASET_,ferns *ferns,params *P,R_){
     For importance, we want to know which unique attributes were used to build it.
     Their number will be placed in numAC, and attC[0..(numAC-1)] will contain their indices.
    */
-   uint attC[16];
+   uint attC[MAX_D];
    attC[0]=(ferns->splitAtts)[e*D*eM];
    uint numAC=1;
    for(uint ee=1;ee<D;ee++){
@@ -170,44 +146,54 @@ model *makeModel(DATASET_,ferns *ferns,params *P,R_){
     continue;
    }
 
-   /*
-    For each unique attribute, we permute it and check how the fraction of scores for the right class decreases.
-    This number is used to update sumD, sumDD and useCount cells for this attribute to later get average and SD over all ferns.
-   */
-   for(uint ee=0;ee<numAC;ee++){
-    double impLoss=calcAccLoss(_DATASET,attC[ee],_thFERN(e*eM),bag,idx,curPreds,numC,D,_R,buf_idxC);
-    sumD[attC[ee]]+=impLoss;
-    sumDD[attC[ee]]+=impLoss*impLoss;
-    useCount[attC[ee]]++;
+   if(P->calcImp==1){
+    for(uint ee=0;ee<numAC;ee++){
+     accLoss loss=calcAccLoss(_DATASET,attC[ee],_thFERN(e*eM),bag,idx,curPreds,numC,D,_R,buf_idxPermA);
+     ans->imp[attC[ee]]+=loss.direct;
+     ans->try[attC[ee]]++;
+    }
+   }else{
+    for(uint ee=0;ee<numAC;ee++){
+     accLoss loss=calcAccLossConsistent(_DATASET,attC[ee],_thFERN(e*eM),bag,idx,curPreds,numC,D,_R,rngStates,buf_idxPermA,buf_idxPermB);
+     ans->imp[attC[ee]]+=loss.direct;
+     ans->shimp[attC[ee]]+=loss.shadow;
+     ans->try[attC[ee]]++;
+    }
    }
   }
  }
 
  //=Finishing up=//
  //Finishing importance
- if(P->calcImp){
-  for(uint e=0;e<nX;e++){
-   if(useCount[e]==0){
-    ans->imp[e]=0.;
-    ans->impSd[e]=NAN;
+ if(P->calcImp) for(uint e=0;e<nX;e++){
+  if(ans->try[e]==0){
+   ans->imp[e]=0.;
+   ans->try[e]=0.;
+   ans->shimp[e]=0.;
+  }else{
+   ans->imp[e]/=ans->try[e];
+   if(P->calcImp==2){
+    ans->shimp[e]/=ans->try[e];
    }else{
-    ans->imp[e]=((double)sumD[e])/((double)useCount[e]);
-    ans->impSd[e]=sqrt(sumDD[e]-sumD[e]*sumD[e]/((double)useCount[e]))/((double)useCount[e]-1);
+    //This is probably redundant
+    ans->shimp[e]=0.;
    }
   }
  }
  //Releasing memory
- FREE(bag); FREE(curPreds);
- FREE(sumD); FREE(sumDD); FREE(useCount); FREE(idx);
- FREE(buf_idxC);
+ FREE(bag); FREE(curPreds); FREE(idx);
+ FREE(buf_idxPermA);
+ FREE(buf_idxPermB);
+ IFFREE(rngStates);
  return(ans);
 
  #ifndef IN_R
   allocFailed:
   killModel(ans);
-  IFFREE(curPreds); IFFREE(bag); IFFREE(sumD);
-  IFFREE(sumDD); IFFREE(useCount); IFFREE(idx);
-  IFFREE(buf_idxC);
+  IFFREE(bag); IFFREE(curPreds); IFFREE(idx);
+  IFFREE(buf_idxPermA);
+  IFFREE(buf_idxPermB);
+  IFFREE(rngStates);
   return(NULL);
  #endif
 }
@@ -255,7 +241,8 @@ void killModel(model *x){
   IFFREE(x->oobOutOfBagC);
   IFFREE(x->oobErr);
   IFFREE(x->imp);
-  IFFREE(x->impSd);
+  IFFREE(x->shimp);
+  IFFREE(x->try);
   FREE(x);
  }
 }

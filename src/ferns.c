@@ -1,6 +1,6 @@
 /*   R frontend to C code
 
-     Copyright 2011-2014 Miron B. Kursa
+     Copyright 2011-2015 Miron B. Kursa
 
      This file is part of rFerns R package.
 
@@ -45,7 +45,7 @@ void loadAttributes(SEXP sAttributes,struct attribute **X,uint *nAtt,uint *nObj)
 
 }
 
-SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sCalcImp,SEXP sOobErrEvery,SEXP sHoldForest,SEXP sMultilabel){
+SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sCalcImp,SEXP sOobErrEvery,SEXP sHoldForest,SEXP sMultilabel,SEXP sConsSeed){
  struct attribute *X;
  uint nAtt,nObj,nClass,*Y;
  uint multi=INTEGER(sMultilabel)[0];
@@ -62,6 +62,8 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
   for(uint e=0;e<nObj*nClass;e++)
    Y[e]=LOGICAL(sDecision)[e];
  }
+ //Now, let's make the RNG and seed from R's RNG
+ EMERGE_R_FROM_R;
 
  //Data loaded, time to load parameters
  params Q;
@@ -71,9 +73,14 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
  Q.numFerns=INTEGER(sNumFerns)[0];
  Q.repOobErrEvery=abs(INTEGER(sOobErrEvery)[0]);
  Q.holdOobErr=INTEGER(sOobErrEvery)[0]>0;
- Q.calcImp=INTEGER(sCalcImp)[0];
+ Q.calcImp=INTEGER(sCalcImp)[0]; //0->none, 1->msl, 2->msl+sha
  Q.holdForest=INTEGER(sHoldForest)[0];
  Q.multilabel=multi;
+ if(Q.calcImp==2){
+  Q.consSeed=((uint64_t*)INTEGER(sConsSeed))[0];
+ }else{
+  Q.consSeed=0;
+ }
 
  //Allocating fern forest; the whole space is controlled by R
  ferns ferns;
@@ -93,8 +100,6 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
   ferns.thresholds=(thresh*)R_alloc(Q.D,sizeof(thresh));
   ferns.scores=(double*)R_alloc((Q.numClasses)*(Q.twoToD),sizeof(double));
  }
- //Now, let's make the RNG and seed from R's RNG
- EMERGE_R_FROM_R;
 
  //Fire the code
  model *M=makeModel(X,nAtt,Y,nObj,&ferns,&Q,_R);
@@ -184,12 +189,24 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
  }
 
  if(M->imp){
-  SEXP sImp; PROTECT(sImp=allocVector(REALSXP,nAtt*2));
-  double *tmp=REAL(sImp);
-  for(uint e=0;e<nAtt;e++)
-   tmp[e]=M->imp[e];
-  for(uint e=0;e<nAtt;e++)
-   tmp[e+nAtt]=M->impSd[e];
+  SEXP sImp;
+  if(Q.calcImp==1){
+   PROTECT(sImp=allocVector(REALSXP,nAtt*2));
+   double *tmp=REAL(sImp);
+   for(uint e=0;e<nAtt;e++)
+    tmp[e]=M->imp[e];
+   for(uint e=0;e<nAtt;e++)
+    tmp[e+nAtt]=M->try[e];
+  }else{
+   PROTECT(sImp=allocVector(REALSXP,nAtt*3));
+   double *tmp=REAL(sImp);
+   for(uint e=0;e<nAtt;e++)
+    tmp[e]=M->imp[e];
+   for(uint e=0;e<nAtt;e++)
+    tmp[e+nAtt]=M->shimp[e];
+   for(uint e=0;e<nAtt;e++)
+    tmp[e+nAtt*2]=M->try[e];
+  }
   SET_VECTOR_ELT(sAns,3,sImp);
   UNPROTECT(1);
  }else{
@@ -202,8 +219,8 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
  SET_STRING_ELT(sAnsNames,0,mkChar("model"));
  SET_STRING_ELT(sAnsNames,1,mkChar("oobScores"));
  SET_STRING_ELT(sAnsNames,2,mkChar("oobErr"));
-    SET_STRING_ELT(sAnsNames,3,mkChar("importance"));
-    SET_STRING_ELT(sAnsNames,4,mkChar("oobPreds"));
+ SET_STRING_ELT(sAnsNames,3,mkChar("importance"));
+ SET_STRING_ELT(sAnsNames,4,mkChar("oobPreds"));
  setAttrib(sAns,R_NamesSymbol,sAnsNames);
  UNPROTECT(2);
 
