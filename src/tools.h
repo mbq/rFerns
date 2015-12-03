@@ -46,12 +46,12 @@ typedef union threshold thresh;
 
 struct ferns{
  //All in series of D elements representing single fern
- uint *splitAtts;
+ int *splitAtts;
  thresh *thresholds;
  score_t *scores;
 };
 typedef struct ferns ferns;
-#define FERN_ uint *restrict splitAtts,thresh *restrict thresholds,score_t *restrict scores
+#define FERN_ int *restrict splitAtts,thresh *restrict thresholds,score_t *restrict scores
 #define _FERN splitAtts,thresholds,scores
 #define _thFERN(e) &((ferns->splitAtts)[(e)*D]),&((ferns->thresholds)[(e)*D]),&((ferns->scores)[(e)*twoToD*numC])
 
@@ -88,10 +88,13 @@ struct rng{
  uint32_t w;
 };
 typedef struct rng rng_t;
-#define znew (((rng->z)=36969*((rng->z)&65535)+((rng->z)>>16))<<16)
-#define wnew (((rng->w)=18000*((rng->w)&65535)+((rng->w)>>16))&65535)
 #define RINTEGER_MAX (~((uint32_t)0))
-#define RINTEGER (znew+wnew)
+uint32_t inline __rintegerf(rng_t *rng){
+ rng->z=36969*((rng->z)&65535)+((rng->z)>>16);
+ rng->w=18000*((rng->w)&65535)+((rng->w)>>16);
+ return(((rng->z)<<16)+((rng->w)&65535));
+}
+#define RINTEGER __rintegerf(rng)
 //Gives a number from [0,1]
 #define RUNIF_CLOSED (((double)RINTEGER)*(1./4294967295.))
 //Gives a number from [0,1)
@@ -135,7 +138,7 @@ uint whichMax(double *where,uint N){
 uint whichMaxTieAware(score_t *where,uint N,R_){
  score_t curMax=-INFINITY;
  uint b[N];
- uint be;
+ uint be=UINT_MAX;
  for(uint e=0;e<N;e++)
   if(where[e]>curMax){
    be=0;
@@ -175,7 +178,7 @@ ferns *allocateFernForest(params *P){
  size_t sizeD=(P->numFerns)*sizeof(score_t)*(P->numClasses)*(P->twoToD);
  ferns *ans=(ferns*)malloc(sizeA+sizeB+sizeC+sizeD);
  if(!ans) return NULL;
- ans->splitAtts=(uint*)((char*)ans+sizeA);
+ ans->splitAtts=(int*)((char*)ans+sizeA);
  ans->thresholds=(thresh*)((char*)ans+sizeA+sizeB);
  ans->scores=(score_t*)((char*)ans+sizeA+sizeB+sizeC);
  return ans;

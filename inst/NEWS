@@ -1,3 +1,6 @@
+Changes in 1.0.0:
+ - Published in JSS.
+
 Changes in 0.3.3:
  - Fixed uninitialised memory bug causing problems with LLVM.
 

@@ -1,0 +1,19 @@
+citHeader("To cite rFerns in publications use:")
+
+citEntry(entry = "Article",
+  title        = "{rFerns}: An Implementation of the Random Ferns Method for General-Purpose Machine Learning",
+  author       = personList(as.person("Miron B. Kursa")),
+  journal      = "Journal of Statistical Software",
+  year         = "2014",
+  volume       = "61",
+  number       = "10",
+  pages        = "1--13",
+  url          = "http://www.jstatsoft.org/v61/i10/",
+
+  textVersion  =
+  paste("Miron B. Kursa (2014).",
+        "rFerns: An Implementation of the Random Ferns Method for General-Purpose Machine Learning.",
+        "Journal of Statistical Software, 61(10), 1-13.",
+        "URL http://www.jstatsoft.org/v61/i10/.")
+)
+

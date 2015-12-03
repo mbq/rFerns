@@ -93,9 +93,9 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
   size_t sizeB=sizeof(thresh)*(Q.D);
   size_t sizeC=sizeof(double)*(Q.numClasses)*(Q.twoToD);
   void *buf=R_alloc(1,sizeA+sizeB+sizeC);
-  ferns.splitAtts=(uint*)((void*)buf);
-  ferns.thresholds=(thresh*)((void*)buf+sizeA);
-  ferns.scores=(score_t*)((void*)buf+sizeA+sizeB);
+  ferns.splitAtts=(int*)((void*)buf);
+  ferns.thresholds=(thresh*)((char*)buf+sizeA);
+  ferns.scores=(score_t*)((char*)buf+sizeA+sizeB);
  }
  //Now, let's make the RNG and seed from R's RNG
  EMERGE_R_FROM_R;
@@ -161,7 +161,6 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
    SEXP sOobPreds; PROTECT(sOobPreds=allocVector(INTSXP,nObj));
    sint *winningClass=INTEGER(sOobPreds);
 
-   uint bestIdx[Q.numClasses];
    for(uint e=0;e<nObj;e++)
     if(M->oobOutOfBagC[e]){
      winningClass[e]=whichMaxTieAware(&(M->oobPreds[e*Q.numClasses]),Q.numClasses,_R);
