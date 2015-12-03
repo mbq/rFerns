@@ -1,6 +1,6 @@
 /*   Code for making/predicting by single fern
 
-     Copyright 2011 Miron B. Kursa
+     Copyright 2011,2012 Miron B. Kursa
 
      This file is part of rFerns R package.
  
@@ -17,26 +17,39 @@ void makeFern(DATASET_,FERN_,uint *bag,score_t *oobPrMatrix,uint *idx,SIMP_,R_){
 	for(uint e=0;e<D;e++){
 		//Select an attribute to make a split on
 		uint E=splitAtts[e]=RINDEX(nX);
-		if(X[E].numCat==0){
-			//Make numerical split
-			double *x=(double*)(X[E].x);
-			double threshold=.5*(x[RINDEX(N)]+x[RINDEX(N)]);
-			for(uint ee=0;ee<N;ee++)
-				idx[ee]+=(1<<e)*(x[ee]<threshold);
-			thresholds[e].value=threshold;
-		}else{
-			//Make categorical split
-			uint *x=(uint*)(X[E].x);
-			mask mask=RMASK(X[E].numCat);
-			for(uint ee=0;ee<N;ee++)
-				idx[ee]+=(1<<e)*((mask&(1<<(x[ee])))>0);
-			thresholds[e].selection=mask;
-		}
+		switch(X[E].numCat){
+			case 0:{
+				//Make numerical split
+				double *x=(double*)(X[E].x);
+				double threshold=.5*(x[RINDEX(N)]+x[RINDEX(N)]);
+				for(uint ee=0;ee<N;ee++)
+					idx[ee]+=(1<<e)*(x[ee]<threshold);
+				thresholds[e].value=threshold;
+				break;
+			}
+			case -1:{
+				//Make integer split
+				sint *x=(sint*)(X[E].x);
+				sint threshold=x[RINDEX(N)];
+				for(uint ee=0;ee<N;ee++)
+					idx[ee]+=(1<<e)*(x[ee]<threshold);
+				thresholds[e].intValue=threshold;
+				break;
+			}
+			default:{
+				//Make categorical split
+				uint *x=(uint*)(X[E].x);
+				mask mask=RMASK(X[E].numCat);
+				for(uint ee=0;ee<N;ee++)
+					idx[ee]+=(1<<e)*((mask&(1<<(x[ee])))>0);
+				thresholds[e].selection=mask;
+			}
+		}		
 	}
 	//Count classes' distribution in each leaf
-	for(int e=0;e<twoToD*numC;e++) counts[e]=1; //Dirichlet prior
-	for(int e=0;e<twoToD;e++) objInLeaf[e]=numC; //An effect of Dirichlet prior
-	for(int e=0;e<N;e++){
+	for(uint e=0;e<twoToD*numC;e++) counts[e]=1; //Dirichlet prior
+	for(uint e=0;e<twoToD;e++) objInLeaf[e]=numC; //An effect of Dirichlet prior
+	for(uint e=0;e<N;e++){
 		counts[Y[e]+idx[e]*numC]+=bag[e];
 		objInLeaf[idx[e]]+=bag[e];
 	}
@@ -54,19 +67,31 @@ void predictFernAdd(PREDSET_,FERN_,double *ans,uint *idx,SIMP_){
 	for(uint e=0;e<N;e++) idx[e]=0;
 	//ans is a matrix of N columns of length numC
 	for(uint e=0;e<D;e++){
-		uint sA=splitAtts[e];
-		if(X[sA].numCat==0){
-			//Predict from continous split
-			double *x=(double*)(X[sA].x);
-			double threshold=thresholds[e].value;
-			for(uint ee=0;ee<N;ee++)
-				idx[ee]+=(1<<e)*(x[ee]<threshold);
-		}else{
-			//Predict from categorical split
-			uint *x=(uint*)(X[sA].x);
-			mask mask=thresholds[e].selection;
-			for(uint ee=0;ee<N;ee++)
-				idx[ee]+=(1<<e)*((mask&(1<<(x[ee])))>0);
+		uint E=splitAtts[e];
+		switch(X[E].numCat){
+			case 0:{
+				//Make numerical split
+				double *x=(double*)(X[E].x);
+				double threshold=thresholds[e].value;
+				for(uint ee=0;ee<N;ee++)
+					idx[ee]+=(1<<e)*(x[ee]<threshold);
+				break;
+			}
+			case -1:{
+				//Make integer split
+				sint *x=(sint*)(X[E].x);
+				sint threshold=thresholds[e].intValue;
+				for(uint ee=0;ee<N;ee++)
+					idx[ee]+=(1<<e)*(x[ee]<threshold);
+				break;
+			}
+			default:{
+				//Make categorical split
+				uint *x=(uint*)(X[E].x);
+				mask mask=thresholds[e].selection;
+				for(uint ee=0;ee<N;ee++)
+					idx[ee]+=(1<<e)*((mask&(1<<(x[ee])))>0);
+			}
 		}
 	}
 	//Fill ans with actual predictions

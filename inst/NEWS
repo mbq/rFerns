@@ -1,2 +1,5 @@
+Changes in 0.2:
+	- Added support for integer and ordered-factor attributes, suggested by Bill Venables.
+
 Changes in 0.1:
 	- First public release.

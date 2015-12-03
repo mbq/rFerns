@@ -1,6 +1,6 @@
 /*   Shared C code
 
-     Copyright 2011 Miron B. Kursa
+     Copyright 2011,2012 Miron B. Kursa
 
      This file is part of rFerns R package.
  
@@ -14,6 +14,7 @@
 
 typedef uint32_t uint;
 typedef uint32_t mask;
+typedef int32_t sint;
 typedef double score_t;
  
 //Structs
@@ -39,6 +40,7 @@ typedef struct parameters params;
 
 union threshold{
 	double value;
+	sint intValue;
 	mask selection;
 };
 typedef union threshold thresh;
@@ -56,8 +58,9 @@ typedef struct ferns ferns;
 
 struct attribute{
 	void *x;
-	uint numCat; //=0 --> x is numerical (and so double*) 
-				 //otherwise x is uint* and max(x)=numCat-1 
+	sint numCat; //   =    0 --> x is numerical and double*
+				 //   =   -1 --> x is numerical and sint*
+				 //otherwise --> x is sint* and max(x)=numCat-1 
 };
 typedef struct attribute att;
 #define DATASET_ att *X,uint nX,uint *Y,uint N

@@ -1,6 +1,6 @@
 /*   R frontend to C code
 
-     Copyright 2011 Miron B. Kursa
+     Copyright 2011,2012 Miron B. Kursa
 
      This file is part of rFerns R package.
  
@@ -35,6 +35,7 @@ void loadAttributes(SEXP sAttributes,struct attribute **X,uint *nAtt,uint *nObj)
 			break;
 			case INTSXP:
 				X[0][e].numCat=length(getAttrib(xe,R_LevelsSymbol));
+				if(X[0][e].numCat==0) X[0][e].numCat=-1;
 				X[0][e].x=(void*)INTEGER(xe);
 			break;
 			default:
@@ -98,9 +99,9 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
 		SEXP sfThreReal; PROTECT(sfThreReal=allocVector(REALSXP,(Q.D)*(Q.numFerns))); 
 		SEXP sfThreInt; PROTECT(sfThreInt=allocVector(INTSXP,(Q.D)*(Q.numFerns))); 
 		for(uint e=0;e<(Q.D)*(Q.numFerns);e++){
-			if(X[ferns.splitAtts[e]].numCat>0){
+			if(X[ferns.splitAtts[e]].numCat!=0){
 				INTEGER(sfThreInt)[e]=ferns.thresholds[e].selection;
-				REAL(sfThreReal)[e]=1./0.;//TODO:NaN;
+				REAL(sfThreReal)[e]=NAN;
 			}else{
 				INTEGER(sfThreInt)[e]=-1;
 				REAL(sfThreReal)[e]=ferns.thresholds[e].value;
@@ -113,8 +114,8 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
 		SET_VECTOR_ELT(sModel,3,sfScores);
 		SEXP sModelNames; PROTECT(sModelNames=NEW_CHARACTER(4));
 		SET_STRING_ELT(sModelNames,0,mkChar("splitAttIdxs"));
-		SET_STRING_ELT(sModelNames,1,mkChar("threNumeric"));
-		SET_STRING_ELT(sModelNames,2,mkChar("threCategorical"));
+		SET_STRING_ELT(sModelNames,1,mkChar("threReal"));
+		SET_STRING_ELT(sModelNames,2,mkChar("threInteger"));
 		SET_STRING_ELT(sModelNames,3,mkChar("scores"));
 		setAttrib(sModel,R_NamesSymbol,sModelNames);
 		SET_VECTOR_ELT(sAns,0,sModel);
@@ -145,7 +146,7 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
 		//Do actual voting on this matrix; push NA for never-oobs and
 		//random-of-max for ties.
 		SEXP sOobPreds; PROTECT(sOobPreds=allocVector(INTSXP,nObj));
-		int *winningClass=INTEGER(sOobPreds);
+		sint *winningClass=INTEGER(sOobPreds);
 		
 		uint bestIdx[Q.numClasses];
 		for(uint e=0;e<nObj;e++)
@@ -190,7 +191,7 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
 	SET_STRING_ELT(sAnsNames,0,mkChar("model"));
 	SET_STRING_ELT(sAnsNames,1,mkChar("oobScores"));
 	SET_STRING_ELT(sAnsNames,2,mkChar("oobErr"));
-    SET_STRING_ELT(sAnsNames,3,mkChar("imp"));
+    SET_STRING_ELT(sAnsNames,3,mkChar("importance"));
     SET_STRING_ELT(sAnsNames,4,mkChar("oobPreds"));
 	setAttrib(sAns,R_NamesSymbol,sAnsNames);
 	UNPROTECT(2);
@@ -216,11 +217,11 @@ SEXP random_ferns_predict(SEXP sAttributes,SEXP sModel,SEXP sD,SEXP sNumFerns,SE
 	ferns ferns;
 	ferns.splitAtts=INTEGER(VECTOR_ELT(sModel,0));
 	ferns.scores=(score_t*)REAL(VECTOR_ELT(sModel,3));
-	int *tI=INTEGER(VECTOR_ELT(sModel,2));
+	sint *tI=INTEGER(VECTOR_ELT(sModel,2));
 	double *tR=REAL(VECTOR_ELT(sModel,1));
 	ferns.thresholds=(thresh*)R_alloc(sizeof(thresh),(Q.D)*(Q.numFerns));
 	for(uint e=0;e<(Q.D)*(Q.numFerns);e++)
-		if(tI[e]<0)
+		if(!ISNAN(tR[e]))
 			ferns.thresholds[e].value=tR[e];
 		else
 			ferns.thresholds[e].selection=tI[e];
@@ -228,7 +229,7 @@ SEXP random_ferns_predict(SEXP sAttributes,SEXP sModel,SEXP sD,SEXP sNumFerns,SE
 		EMERGE_R_FROM_R;
 		
 		SEXP sAns; PROTECT(sAns=allocVector(INTSXP,nObj));
-		int *yp=INTEGER(sAns);
+		sint *yp=INTEGER(sAns);
 		double *buf_sans=(double*)R_alloc(sizeof(double),(Q.numClasses)*nObj);
 		predictWithModelSimple(X,nAtt,nObj,&ferns,(uint*)yp,_SIMPPQ(Q),buf_sans,_R);
 		UNPROTECT(1);

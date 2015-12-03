@@ -17,7 +17,7 @@
 \method{print}{rFerns}(x,...)
 }
 \arguments{
-  \item{x}{Data frame containing attributes; must have unique names and contain only numeric or factor columns. Factors must have less than 65 levels. No \code{NA} values are permitted.}
+  \item{x}{Data frame containing attributes; must have unique names and contain only numeric, integer or (ordered) factor columns. Factors must have less than 31 levels. No \code{NA} values are permitted.}
   \item{y}{A decision vector. Must a factor of the same length as \code{nrow(X)}.}
   \item{formula}{Formula representation of the model.}
   \item{data}{Frame containing formula elements.}
@@ -41,13 +41,13 @@
   \item{timeTaken}{Time used to train the model (smaller than wall time because data preparation and model final touches are excluded; however it includes the time needed to compute importance, if it applies). An object of \code{difftime} class.}
   \item{parameters}{Numerical vector of three elements: \code{classes}, \code{depth} and \code{ferns}, containing respectively the number of classes in decision and copies of \code{depth} and \code{ferns} parameters.}
   \item{classLabels}{Copy of \code{levels(Y)} after purging unused levels.}
-  \item{predictorLevels}{Copy of train set structure; a list, containing \code{NULL}s for numeric attributes and \code{levels} values for categorical attributes.}
+  \item{isStruct}{Copy of the train set structure, required internally by predict method.}
 }
 
 \note{
-  The current implementation does not take advantage of binary attributes and ordered factors; first are not allowed, the second are treated as ordered ones. To this end, you should convert ordered factors to numerical attributes to take advantage of their order.
-  
   The unused levels of the decision will be removed; on the other hand unused levels of categorical attributes will be preserved, so that they could be present in the data later predicted with the model.
+
+  The levels of ordered factors in training and predicted data must be identical.
 
   Do not use formula interface for a data with large number of attributes; the overhead from handling the formula may be significant.
 }

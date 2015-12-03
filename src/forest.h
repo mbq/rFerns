@@ -1,6 +1,6 @@
 /*   Code handling fern ensembles -- creation, prediction, OOB, accuracy...
 
-     Copyright 2011 Miron B. Kursa
+     Copyright 2011,2012 Miron B. Kursa
 
      This file is part of rFerns R package.
  
@@ -9,30 +9,44 @@
  You should have received a copy of the GNU General Public License along with rFerns. If not, see http://www.gnu.org/licenses/.
 */
 
-double calcAccLoss(DATASET_,uint sA,FERN_,uint *bag,uint *idx,score_t *curPreds,uint numC,uint D,R_,uint *idxC){
+double calcAccLoss(DATASET_,uint E,FERN_,uint *bag,uint *idx,score_t *curPreds,uint numC,uint D,R_,uint *idxC){
 	uint twoToD=1<<D;
 	uint count=0;
 	double wrongDiff=0;
 	memcpy(idxC,idx,sizeof(uint)*N);
 	for(uint e=0;e<D;e++)
-		if(splitAtts[e]==sA){
-			if(X[sA].numCat==0){
-				//Predict from continous split
-				double *x=(double*)(X[sA].x);
-				double threshold=thresholds[e].value;
-				for(uint ee=0;ee<N;ee++){
-					int mod=((x[RINDEX(N)]<threshold)-(x[ee]<threshold));
-					idxC[ee]=idx[ee]+(1<<e)*mod;
+		if(splitAtts[e]==E){
+			switch(X[E].numCat){
+				case 0:{
+					//Nmerical split
+					double *x=(double*)(X[E].x);
+					double threshold=thresholds[e].value;
+					for(uint ee=0;ee<N;ee++){
+						sint mod=((x[RINDEX(N)]<threshold)-(x[ee]<threshold));
+						idxC[ee]=idx[ee]+(1<<e)*mod;
+					}
+					break;
 				}
-			}else{
-				//Predict from categorical split
-				uint *x=(uint*)(X[sA].x);
-				mask mask=thresholds[e].selection;
-				for(uint ee=0;ee<N;ee++){
-					int mod=(((mask&(1<<(x[RINDEX(N)])))>0)-((mask&(1<<(x[ee])))>0));
-					idxC[ee]=idx[ee]+(1<<e)*mod;
+				case -1:{
+					//Integer split
+					sint *x=(sint*)(X[E].x);
+					sint threshold=thresholds[e].intValue;
+					for(uint ee=0;ee<N;ee++){
+						sint mod=((x[RINDEX(N)]<threshold)-(x[ee]<threshold));
+						idxC[ee]=idx[ee]+(1<<e)*mod;
+					}
+					break;
 				}
-			}
+				default:{
+					//Categorical split
+					uint *x=(uint*)(X[E].x);
+					mask mask=thresholds[e].selection;
+					for(uint ee=0;ee<N;ee++){
+						sint mod=(((mask&(1<<(x[RINDEX(N)])))>0)-((mask&(1<<(x[ee])))>0));
+						idxC[ee]=idx[ee]+(1<<e)*mod;
+					}
+				}
+			}		
 		}
 	for(uint e=0;e<N;e++){ 
 		wrongDiff+=
