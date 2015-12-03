@@ -76,5 +76,4 @@ rFerns(Species~.,data=iris,importance=TRUE)->model
 print(model$imp)
 }
 
-
 \keyword{classif}

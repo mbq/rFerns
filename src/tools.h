@@ -10,7 +10,6 @@
 */
 
 #include <stdint.h>
-#include <string.h> //For memcpy
 
 typedef uint32_t uint;
 typedef uint32_t mask;
@@ -82,14 +81,14 @@ typedef struct model model;
  For speed, rFerns uses its own PRNG which is seeded from R's PRNG each time an rFerns model is built.
  It is somewhat worse then more computationally demanding PRNGs, though the way it is used makes the difference negligible.
 */
-//Internal PRNG -- based on G. Marsaglia's not-better-idea generator
+//Internal PRNG -- based on G. Marsaglia's no-better-idea generator
 struct rng{
  uint32_t z;
  uint32_t w;
 };
 typedef struct rng rng_t;
 #define RINTEGER_MAX (~((uint32_t)0))
-uint32_t inline __rintegerf(rng_t *rng){
+uint32_t __rintegerf(rng_t *rng){
  rng->z=36969*((rng->z)&65535)+((rng->z)>>16);
  rng->w=18000*((rng->w)&65535)+((rng->w)>>16);
  return(((rng->z)<<16)+((rng->w)&65535));
@@ -98,7 +97,7 @@ uint32_t inline __rintegerf(rng_t *rng){
 //Gives a number from [0,1]
 #define RUNIF_CLOSED (((double)RINTEGER)*(1./4294967295.))
 //Gives a number from [0,1)
-#define RUNIF_OPEN (((double)RINTEGER)*(1./4294967296.))
+#define RUNIF_OPEN   (((double)RINTEGER)*(1./4294967296.))
 //Gives a number from 0 to upTo-1 (each value equally probable provided upTo is safely smaller than 1<<32)
 #define RINDEX(upTo) ((uint32_t)(RUNIF_OPEN*((double)upTo)))
 //Setting seed; give it two uint32s you like
@@ -113,7 +112,7 @@ uint32_t inline __rintegerf(rng_t *rng){
  uint32_t a=(uint32_t)(((double)(~((uint32_t)0)))*unif_rand()); \
  uint32_t b=(uint32_t)(((double)(~((uint32_t)0)))*unif_rand()); \
  PutRNGstate(); \
-  rng_t rngdata; \
+ rng_t rngdata; \
  rng_t *rng=&rngdata; \
  SETSEED(a,b)
 

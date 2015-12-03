@@ -13,3 +13,5 @@ cp DESCRIPTION rFerns/.
 cp NAMESPACE rFerns/.
 echo "Copying done."
 
+rm rFerns_*.tar.gz
+R CMD build rFerns/

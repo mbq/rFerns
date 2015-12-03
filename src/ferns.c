@@ -77,8 +77,8 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
 
  //Allocating fern forest; the whole space is controlled by R
  ferns ferns;
- SEXP sfSplitAtts;
- SEXP sfScores;
+ SEXP sfSplitAtts=R_NilValue;
+ SEXP sfScores=R_NilValue;
  if(Q.holdForest){
   //To store the forest, we allocate vectors which will contain it
   // and build ferns out of their buffers. The rest is in saving forest.
@@ -89,13 +89,9 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
   ferns.scores=(score_t*)REAL(sfScores);
  }else{
   //In the opposite case, we allocate a chunk for 1-fern forest on GC heap
-  size_t sizeA=sizeof(uint)*(Q.D);
-  size_t sizeB=sizeof(thresh)*(Q.D);
-  size_t sizeC=sizeof(double)*(Q.numClasses)*(Q.twoToD);
-  void *buf=R_alloc(1,sizeA+sizeB+sizeC);
-  ferns.splitAtts=(int*)((void*)buf);
-  ferns.thresholds=(thresh*)((char*)buf+sizeA);
-  ferns.scores=(score_t*)((char*)buf+sizeA+sizeB);
+  ferns.splitAtts=(int*)R_alloc(Q.D,sizeof(int));
+  ferns.thresholds=(thresh*)R_alloc(Q.D,sizeof(thresh));
+  ferns.scores=(double*)R_alloc((Q.numClasses)*(Q.twoToD),sizeof(double));
  }
  //Now, let's make the RNG and seed from R's RNG
  EMERGE_R_FROM_R;
@@ -244,9 +240,6 @@ SEXP random_ferns_predict(SEXP sAttributes,SEXP sModel,SEXP sD,SEXP sNumFerns,SE
    ferns.thresholds[e].selection=tI[e];
  if(INTEGER(sMode)[0]==0 && !multi){
   EMERGE_R_FROM_R;
-
-  //TODO: if(multi) allocate more for answer and don't use random
-
   SEXP sAns; PROTECT(sAns=allocVector(INTSXP,nObj));
   sint *yp=INTEGER(sAns);
   double *buf_sans=(double*)R_alloc(sizeof(double),(Q.numClasses)*nObj);

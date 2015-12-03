@@ -13,7 +13,8 @@
 double calcAccLoss(DATASET_,uint E,FERN_,uint *bag,uint *idx,score_t *curPreds,uint numC,uint D,R_,uint *idxC){
  uint count=0;
  double wrongDiff=0;
- memcpy(idxC,idx,sizeof(uint)*N);
+ for(uint e=0;e<N;e++)
+  idxC[e]=idx[e];
  for(uint e=0;e<D;e++)
   if(splitAtts[e]==E){
    switch(X[E].numCat){
@@ -21,30 +22,24 @@ double calcAccLoss(DATASET_,uint E,FERN_,uint *bag,uint *idx,score_t *curPreds,u
      //Numerical split
      double *x=(double*)(X[E].x);
      double threshold=thresholds[e].value;
-     for(uint ee=0;ee<N;ee++){
-      sint mod=((x[RINDEX(N)]<threshold)-(x[ee]<threshold));
-      idxC[ee]=idx[ee]+(1<<e)*mod;
-     }
+     for(uint ee=0;ee<N;ee++)
+      idxC[ee]=((idxC[ee])&(~(1<<e)))+(1<<e)*(x[RINDEX(N)]<threshold);
      break;
     }
     case -1:{
      //Integer split
      sint *x=(sint*)(X[E].x);
      sint threshold=thresholds[e].intValue;
-     for(uint ee=0;ee<N;ee++){
-      sint mod=((x[RINDEX(N)]<threshold)-(x[ee]<threshold));
-      idxC[ee]=idx[ee]+(1<<e)*mod;
-     }
+     for(uint ee=0;ee<N;ee++)
+      idxC[ee]=((idxC[ee])&(~(1<<e)))+(1<<e)*(x[RINDEX(N)]<threshold);
      break;
     }
     default:{
      //Categorical split
      uint *x=(uint*)(X[E].x);
      mask mask=thresholds[e].selection;
-     for(uint ee=0;ee<N;ee++){
-      sint mod=(((mask&(1<<(x[RINDEX(N)])))>0)-((mask&(1<<(x[ee])))>0));
-      idxC[ee]=idx[ee]+(1<<e)*mod;
-     }
+     for(uint ee=0;ee<N;ee++)
+      idxC[ee]=((idxC[ee])&(~(1<<e)))+(1<<e)*((mask&(1<<(x[RINDEX(N)])))>0);
     }
    }
   }
@@ -54,6 +49,7 @@ double calcAccLoss(DATASET_,uint E,FERN_,uint *bag,uint *idx,score_t *curPreds,u
     (scores[idx[e]*numC+Y[e]]-scores[idxC[e]*numC+Y[e]]);
   count+=!(bag[e]);
  }
+
  return(wrongDiff/((double)count));
 }
 
@@ -125,7 +121,7 @@ model *makeModel(DATASET_,ferns *ferns,params *P,R_){
   ALLOCZ(ans->imp,double,nX);
   ALLOCZ(ans->impSd,double,nX);
   ALLOC(buf_idxC,uint,N);
- }
+}
 
  /*
   When holdForest is FALSE, each fern is written to the index 0 of the fern vectors (which are obviously allocated to hold only 1 fern).
@@ -239,7 +235,6 @@ void predictWithModelSimple(PREDSET_,ferns *x,uint *ans,SIMPP_,double *sans,R_){
     ans[e*N+ee]=sans[ee*numC+e]>0.;
  }
 }
-
 
 void predictWithModelScores(PREDSET_,ferns *x,double *ans,SIMPP_,uint *idx){
  ferns *ferns=x;

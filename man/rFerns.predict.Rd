@@ -48,6 +48,9 @@ print(table(
 
 err<-mean(p!=irisE[["Species"]])
 print(paste("Test error",err,sep=" "))
+
+#Show first OOB scores
+head(predict(model,scores=TRUE))
 }
 
 

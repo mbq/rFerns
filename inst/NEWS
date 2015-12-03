@@ -1,3 +1,9 @@
+Changes in 1.1.0:
+ - Code portability fixes.
+ - predict method returns OOB results for no input data even when fern
+ forest is not saved.
+ - Fixed minor importance calculation bug.
+
 Changes in 1.0.0:
  - Published in JSS.
 

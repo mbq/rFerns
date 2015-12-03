@@ -129,7 +129,8 @@ rFerns.default<-function(x,y,depth=5,ferns=1000,importance=FALSE,reportErrorEver
 predict.rFerns<-function(object,x,scores=FALSE,...){
  #Validate input
  if(!("rFerns"%in%class(object))) stop("object must be of a rFerns class")
- if(is.null(object$model)) stop("This fern forest object does not contain the model.")
+ if(is.null(object$model)&(!missing(x)))
+  stop("This fern forest object does not contain the model.")
  scores<-as.logical(scores)[1];
  if(is.na(scores)) stop("Wrong value of scores; should be TRUE or FALSE.")
 
