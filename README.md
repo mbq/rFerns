@@ -1,5 +1,4 @@
-About
------
+# rFerns [![CRAN downloads](http://cranlogs.r-pkg.org/badges/rFerns)](http://cran.rstudio.com/web/packages/rFerns/index.html)
 
 rFerns is an extended [random ferns](http://cvlab.epfl.ch/alumni/oezuysal/ferns.html) implementation for [R](http://r-project.org); in comparison to original, it can handle standard information system containing both categorical and continuous attributes. Moreover, it generates OOB error approximation and permutation-based attribute importance measure similar to [randomForest](http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm).
 Here is a [paper with all the details](http://www.jstatsoft.org/article/view/v061i10).
