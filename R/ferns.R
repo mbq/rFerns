@@ -194,7 +194,8 @@ predict.rFerns<-function(object,x,scores=FALSE,...){
   object$model,
   as.integer(object$parameters["depth"]),
   as.integer(object$parameters["ferns"]),
-  as.integer(length(object$classLabels)),as.integer(scores||multi))->ans
+  as.integer(length(object$classLabels)),
+  as.integer(scores),as.integer(multi))->ans
  after<-Sys.time()
 
  if(scores){

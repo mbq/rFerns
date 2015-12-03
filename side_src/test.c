@@ -79,6 +79,7 @@ void irisTest(R_){
  Q.repOobErrEvery=50000;
  Q.holdForest=1;
  Q.calcImp=1;
+ Q.multilabel=0;
  //Make dataset
  struct attribute *X=malloc(sizeof(struct attribute)*NN);
  uint *y=malloc(sizeof(uint)*N);
@@ -123,7 +124,7 @@ void irisTest(R_){
  free(X);
 }
 
-uint main(uint argc,char **argv){
+int main(int argc,char **argv){
  srand(time(NULL));
  testByteStuff();
  rng_t rngdata;

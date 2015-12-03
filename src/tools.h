@@ -175,9 +175,9 @@ ferns *allocateFernForest(params *P){
  size_t sizeD=(P->numFerns)*sizeof(score_t)*(P->numClasses)*(P->twoToD);
  ferns *ans=(ferns*)malloc(sizeA+sizeB+sizeC+sizeD);
  if(!ans) return NULL;
- ans->splitAtts=(uint*)((void*)ans+sizeA);
- ans->thresholds=(thresh*)((void*)ans+sizeA+sizeB);
- ans->scores=(score_t*)((void*)ans+sizeA+sizeB+sizeC);
+ ans->splitAtts=(uint*)((char*)ans+sizeA);
+ ans->thresholds=(thresh*)((char*)ans+sizeA+sizeB);
+ ans->scores=(score_t*)((char*)ans+sizeA+sizeB+sizeC);
  return ans;
 }
 

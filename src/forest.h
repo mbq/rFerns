@@ -11,7 +11,6 @@
 
 //TODO: Make it multi-label (mean Hanning distance increase or mean quotient increase for good classes or ...)
 double calcAccLoss(DATASET_,uint E,FERN_,uint *bag,uint *idx,score_t *curPreds,uint numC,uint D,R_,uint *idxC){
- uint twoToD=1<<D;
  uint count=0;
  double wrongDiff=0;
  memcpy(idxC,idx,sizeof(uint)*N);
@@ -190,8 +189,8 @@ model *makeModel(DATASET_,ferns *ferns,params *P,R_){
 
  //=Finishing up=//
  //Finishing importance
- if(P->calcImp)
-  for(uint e=0;e<nX;e++)
+ if(P->calcImp){
+  for(uint e=0;e<nX;e++){
    if(useCount[e]==0){
     ans->imp[e]=0.;
     ans->impSd[e]=NAN;
@@ -199,6 +198,8 @@ model *makeModel(DATASET_,ferns *ferns,params *P,R_){
     ans->imp[e]=((double)sumD[e])/((double)useCount[e]);
     ans->impSd[e]=sqrt(sumDD[e]-sumD[e]*sumD[e]/((double)useCount[e]))/((double)useCount[e]-1);
    }
+  }
+ }
  //Releasing memory
  FREE(bag); FREE(curPreds);
  FREE(sumD); FREE(sumDD); FREE(useCount); FREE(idx);

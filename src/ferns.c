@@ -216,7 +216,7 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
  return(sAns);
 }
 
-SEXP random_ferns_predict(SEXP sAttributes,SEXP sModel,SEXP sD,SEXP sNumFerns,SEXP sNumClasses,SEXP sMode){
+SEXP random_ferns_predict(SEXP sAttributes,SEXP sModel,SEXP sD,SEXP sNumFerns,SEXP sNumClasses,SEXP sMode,SEXP sMultilabel){
  struct attribute *X;
  uint nAtt,nObj;
  loadAttributes(sAttributes,&X,&nAtt,&nObj);
@@ -224,10 +224,12 @@ SEXP random_ferns_predict(SEXP sAttributes,SEXP sModel,SEXP sD,SEXP sNumFerns,SE
  //Data loaded, time to load parameters
  params Q;
  uint nClass=INTEGER(sNumClasses)[0];
+ uint multi=INTEGER(sMultilabel)[0];
  Q.numClasses=nClass;
  Q.D=INTEGER(sD)[0];
  Q.twoToD=1<<(Q.D);
  Q.numFerns=INTEGER(sNumFerns)[0];
+ Q.multilabel=multi;
 
  //Deciphering model -- WARNING, order of Model list is SIGNIFICANT!
  ferns ferns;
@@ -241,7 +243,7 @@ SEXP random_ferns_predict(SEXP sAttributes,SEXP sModel,SEXP sD,SEXP sNumFerns,SE
    ferns.thresholds[e].value=tR[e];
   else
    ferns.thresholds[e].selection=tI[e];
- if(INTEGER(sMode)[0]==0){
+ if(INTEGER(sMode)[0]==0 && !multi){
   EMERGE_R_FROM_R;
 
   //TODO: if(multi) allocate more for answer and don't use random

@@ -1,3 +1,6 @@
+Changes in 0.3.3:
+ - Fixed uninitialised memory bug causing problems with LLVM.
+
 Changes in 0.3.2:
  - Prototype of a multi-label classification.
  - Removed redundant constant from scores definition; score values will
