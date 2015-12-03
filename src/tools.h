@@ -52,7 +52,7 @@ struct ferns{
 	score_t *scores;
 };
 typedef struct ferns ferns;
-#define FERN_ uint *splitAtts,thresh *thresholds,score_t *scores
+#define FERN_ uint *restrict splitAtts,thresh *restrict thresholds,score_t *restrict scores
 #define _FERN splitAtts,thresholds,scores
 #define	_thFERN(e) &((ferns->splitAtts)[(e)*D]),&((ferns->thresholds)[(e)*D]),&((ferns->scores)[(e)*twoToD*numC])
 

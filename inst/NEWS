@@ -1,3 +1,7 @@
+Changes in 0.3:
+    - Handling of unbalanced classes.
+    - Performance tweaks.
+
 Changes in 0.2:
 	- Added support for integer and ordered-factor attributes, suggested by Bill Venables.
 

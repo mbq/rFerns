@@ -9,7 +9,7 @@
  You should have received a copy of the GNU General Public License along with rFerns. If not, see http://www.gnu.org/licenses/.
 */
 
-void makeFern(DATASET_,FERN_,uint *bag,score_t *oobPrMatrix,uint *idx,SIMP_,R_){
+void makeFern(DATASET_,FERN_,uint *restrict bag,score_t *restrict oobPrMatrix,uint *restrict idx,SIMP_,R_){
 	uint counts[twoToD*numC];
 	uint objInLeaf[twoToD];
 	for(uint e=0;e<N;e++) idx[e]=0;
@@ -20,7 +20,7 @@ void makeFern(DATASET_,FERN_,uint *bag,score_t *oobPrMatrix,uint *idx,SIMP_,R_){
 		switch(X[E].numCat){
 			case 0:{
 				//Make numerical split
-				double *x=(double*)(X[E].x);
+				double  * restrict x=(double*)(X[E].x);
 				double threshold=.5*(x[RINDEX(N)]+x[RINDEX(N)]);
 				for(uint ee=0;ee<N;ee++)
 					idx[ee]+=(1<<e)*(x[ee]<threshold);
@@ -29,7 +29,7 @@ void makeFern(DATASET_,FERN_,uint *bag,score_t *oobPrMatrix,uint *idx,SIMP_,R_){
 			}
 			case -1:{
 				//Make integer split
-				sint *x=(sint*)(X[E].x);
+				sint  *restrict x=(sint*)(X[E].x);
 				sint threshold=x[RINDEX(N)];
 				for(uint ee=0;ee<N;ee++)
 					idx[ee]+=(1<<e)*(x[ee]<threshold);
@@ -38,7 +38,7 @@ void makeFern(DATASET_,FERN_,uint *bag,score_t *oobPrMatrix,uint *idx,SIMP_,R_){
 			}
 			default:{
 				//Make categorical split
-				uint *x=(uint*)(X[E].x);
+				uint  *restrict x=(uint*)(X[E].x);
 				mask mask=RMASK(X[E].numCat);
 				for(uint ee=0;ee<N;ee++)
 					idx[ee]+=(1<<e)*((mask&(1<<(x[ee])))>0);
@@ -47,23 +47,27 @@ void makeFern(DATASET_,FERN_,uint *bag,score_t *oobPrMatrix,uint *idx,SIMP_,R_){
 		}		
 	}
 	//Count classes' distribution in each leaf
+        uint apriori[numC];
+        for(uint e=0;e<numC;e++) apriori[e]=1; //Dirichlet prior
 	for(uint e=0;e<twoToD*numC;e++) counts[e]=1; //Dirichlet prior
 	for(uint e=0;e<twoToD;e++) objInLeaf[e]=numC; //An effect of Dirichlet prior
 	for(uint e=0;e<N;e++){
 		counts[Y[e]+idx[e]*numC]+=bag[e];
 		objInLeaf[idx[e]]+=bag[e];
+                apriori[Y[e]]+=bag[e];
 	}
-	 
+	uint aprioriAll=0;
+        for(uint e=0;e<numC;e++) aprioriAll+=apriori[e];
 	for(uint e=0;e<twoToD;e++)
 		for(uint ee=0;ee<numC;ee++)
-			scores[ee+e*numC]=log(((double)counts[ee+e*numC])/((double)objInLeaf[e])*((double)numC));
+			scores[ee+e*numC]=log(((double)counts[ee+e*numC])/((double)objInLeaf[e])*((double)numC)/((double)apriori[ee])*((double)aprioriAll));
 	
 	for(uint e=0;e<N;e++)
 		for(uint ee=0;ee<numC;ee++)
 			oobPrMatrix[e*numC+ee]=scores[idx[e]*numC+ee];
 }
 
-void predictFernAdd(PREDSET_,FERN_,double *ans,uint *idx,SIMP_){
+void predictFernAdd(PREDSET_,FERN_,double *restrict ans,uint *restrict idx,SIMP_){
 	for(uint e=0;e<N;e++) idx[e]=0;
 	//ans is a matrix of N columns of length numC
 	for(uint e=0;e<D;e++){
@@ -71,7 +75,7 @@ void predictFernAdd(PREDSET_,FERN_,double *ans,uint *idx,SIMP_){
 		switch(X[E].numCat){
 			case 0:{
 				//Make numerical split
-				double *x=(double*)(X[E].x);
+				double *restrict x=(double*)(X[E].x);
 				double threshold=thresholds[e].value;
 				for(uint ee=0;ee<N;ee++)
 					idx[ee]+=(1<<e)*(x[ee]<threshold);
@@ -79,7 +83,7 @@ void predictFernAdd(PREDSET_,FERN_,double *ans,uint *idx,SIMP_){
 			}
 			case -1:{
 				//Make integer split
-				sint *x=(sint*)(X[E].x);
+				sint *restrict x=(sint*)(X[E].x);
 				sint threshold=thresholds[e].intValue;
 				for(uint ee=0;ee<N;ee++)
 					idx[ee]+=(1<<e)*(x[ee]<threshold);
@@ -87,7 +91,7 @@ void predictFernAdd(PREDSET_,FERN_,double *ans,uint *idx,SIMP_){
 			}
 			default:{
 				//Make categorical split
-				uint *x=(uint*)(X[E].x);
+				uint *restrict x=(uint*)(X[E].x);
 				mask mask=thresholds[e].selection;
 				for(uint ee=0;ee<N;ee++)
 					idx[ee]+=(1<<e)*((mask&(1<<(x[ee])))>0);
