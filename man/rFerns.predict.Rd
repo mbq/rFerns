@@ -17,7 +17,7 @@
 }
 
 \value{
-  Predictions. If \code{scores} is \code{TRUE}, a factor vector with predictions, else a matrix with class' scores.
+  Predictions. If \code{scores} is \code{TRUE}, a factor vector (for many-class classification) or a logical matrix (for multi-class classification) with predictions, else a matrix with class' scores.
 }
 
 
@@ -52,4 +52,3 @@ print(paste("Test error",err,sep=" "))
 
 
 \keyword{classif}
-

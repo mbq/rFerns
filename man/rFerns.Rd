@@ -18,7 +18,7 @@
 }
 \arguments{
   \item{x}{Data frame containing attributes; must have unique names and contain only numeric, integer or (ordered) factor columns. Factors must have less than 31 levels. No \code{NA} values are permitted.}
-  \item{y}{A decision vector. Must a factor of the same length as \code{nrow(X)}.}
+  \item{y}{A decision vector. Must a factor of the same length as \code{nrow(X)} for ordinary many-label classification, or a logical matrix with each column corresponding to a class for multi-label classification.}
   \item{formula}{Formula representation of the model.}
   \item{data}{Frame containing formula elements.}
   \item{depth}{The depth of the ferns; must be in 1--16 range. Note that time and memory requirements scale with \code{2^depth}.}
@@ -78,4 +78,3 @@ print(model$imp)
 
 
 \keyword{classif}
-

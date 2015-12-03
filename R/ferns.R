@@ -1,6 +1,6 @@
 #    R part of rFerns
 #
-#    Copyright 2011,2012 Miron B. Kursa
+#    Copyright 2011-2014 Miron B. Kursa
 #
 #    This file is part of rFerns R package.
 #
@@ -38,13 +38,26 @@ rFerns.default<-function(x,y,depth=5,ferns=1000,importance=FALSE,reportErrorEver
  stopifnot(ferns>0)
  if(!is.data.frame(x)) stop("x must be a data frame.")
  if(is.na(names(x)) || any(duplicated(names(x)))) stop("Attribute names must be unique.")
- if(!is.factor(y) || !is.null(dim(y))) stop("y must be a factor vector.")
- if(!all(sapply(x,function(j) any(class(j)%in%c("numeric","integer","factor","ordered"))))) stop("All attributes must be either numeric or factor.")
- if(length(y)!=nrow(x)) stop("Attributes' and decision's sizes must match.")
- if(any((sapply(x,function(a) ((length(levels(a))>30)&&(!is.ordered(a)))))->bad)){
-  stop(sprintf("Attribute(s) %s is/are unordered factor(s) with above 30 levels. Split or convert to ordered.",paste(names(x)[bad],collapse=", ")))
+ if(is.factor(y) && is.null(dim(y))){
+  multi<-FALSE;
+  if(length(y)!=nrow(x)) stop("Attributes' and decision's sizes must match.")
+ }else{
+  y<-as.matrix(y);
+  if(is.logical(y) && length(dim(y))==2){
+   multi<-TRUE;
+   if(nrow(y)!=nrow(x)) stop("Attributes' and decision's sizes must match.")
+  }else{
+   stop("y must be a factor vector or a logical matrix.")
+  }
  }
- y<-factor(y)
+ if(!all(sapply(x,function(j) any(class(j)%in%c("numeric","integer","factor","ordered")))))
+  stop("All attributes must be either numeric or factor.")
+ if(any((sapply(x,function(a) ((length(levels(a))>30)&&(!is.ordered(a)))))->bad)){
+  stop(sprintf(
+   "Attribute(s) %s is/are unordered factor(s) with above 30 levels. Split or convert to ordered.",
+   paste(names(x)[bad],collapse=", ")))
+ }
+ if(multi && importance) stop("Importance is not yet supported for multi-label ferns.")
 
  if(reportErrorEvery<1 || reportErrorEvery>ferns) reportErrorEvery<-ferns+1
  saveOobErr<-ifelse(saveErrorPropagation,1,-1)*reportErrorEvery
@@ -55,15 +68,27 @@ rFerns.default<-function(x,y,depth=5,ferns=1000,importance=FALSE,reportErrorEver
   as.integer(ferns[1]),
   as.integer(importance[1]),
   as.integer(saveOobErr),
-  as.integer(saveForest))->ans
+  as.integer(saveForest),
+  as.integer(multi))->ans
  after<-Sys.time()
 
  #Adjust C output with proper factor levels
- ans$oobPreds<-factor(ans$oobPreds,
-     levels=0:(length(levels(y))-1),
-     labels=levels(y))
+ if(!is.null(ans$oobPreds)){
+  ans$oobPreds<-factor(ans$oobPreds,
+      levels=0:(length(levels(y))-1),
+      labels=levels(y))
+ }else{
+  if(multi){
+   ans$oobPreds<-t(ans$oobScores>0);
+   colnames(ans$oobPreds)<-colnames(y);
+  }
+ }
 
- ans$classLabels<-levels(y)
+ if(!multi){
+  ans$classLabels<-levels(y)
+ }else{
+  ans$classLabels<-colnames(y)
+ }
  if(saveForest){
   ans$isStruct<-list()
   lapply(x,levels)->ans$isStruct$predictorLevels
@@ -71,14 +96,26 @@ rFerns.default<-function(x,y,depth=5,ferns=1000,importance=FALSE,reportErrorEver
   sapply(x,is.ordered)->ans$isStruct$orderedFactorPredictors
  }
 
- table(Predicted=ans$oobPreds,True=y)->ans$oobConfusionMatrix
- if(is.null(ans$oobErr)) ans$oobErr<-mean(ans$oobPreds!=y,na.rm=TRUE)
- ans$parameters<-c(classes=length(levels(y)),depth=depth,ferns=ferns)
+ if(!multi){
+  table(Predicted=ans$oobPreds,True=y)->ans$oobConfusionMatrix
+  if(is.null(ans$oobErr))
+   ans$oobErr<-mean(ans$oobPreds!=y,na.rm=TRUE)
+  ans$parameters<-c(classes=length(levels(y)),depth=depth,ferns=ferns);
+  ans$type<-"class-many";
+ }else{
+  NULL->ans$oobConfusionMatrix
+  if(is.null(ans$oobErr))
+   ans$oobErr<-mean(rowSums(y!=ans$oobPreds))
+  ans$oobPerClassError<-colMeans(ans$oobPreds!=y);
+  ans$parameters<-c(classes=ncol(y),depth=depth,ferns=ferns);
+  ans$type<-"class-multi";
+ }
 
  if(!is.null(ans$importance)){
   ans$importance<-data.frame(matrix(ans$importance,ncol=2))
   names(ans$importance)<-c("MeanScoreLoss","SdScoreLoss")
-  if(!is.null(names(x))) rownames(ans$importance)<-names(x)
+  if(!is.null(names(x)))
+   rownames(ans$importance)<-names(x)
  }
 
  #Calculate time taken by the calculation
@@ -93,6 +130,8 @@ predict.rFerns<-function(object,x,scores=FALSE,...){
  #Validate input
  if(!("rFerns"%in%class(object))) stop("object must be of a rFerns class")
  if(is.null(object$model)) stop("This fern forest object does not contain the model.")
+ scores<-as.logical(scores)[1];
+ if(is.na(scores)) stop("Wrong value of scores; should be TRUE or FALSE.")
 
  iss<-object$isStruct
  if(is.null(iss)){
@@ -147,21 +186,29 @@ predict.rFerns<-function(object,x,scores=FALSE,...){
    }
   }
 
+ multi<-identical(object$type,"class-multi");
+
  #Prediction itself
  Sys.time()->before
  .Call(random_ferns_predict,x,
   object$model,
   as.integer(object$parameters["depth"]),
   as.integer(object$parameters["ferns"]),
-  as.integer(length(object$classLabels)),as.integer(scores)[1])->ans
+  as.integer(length(object$classLabels)),as.integer(scores||multi))->ans
  after<-Sys.time()
 
  if(scores){
-  ans<-data.frame(matrix(ans,ncol=length(object$classLabels),byrow=TRUE)/object$parameters["ferns"])
+  ans<-data.frame(matrix(ans,ncol=length(object$classLabels),byrow=TRUE)/
+   object$parameters["ferns"])
   object$classLabels->names(ans)
  }else{
-  ans<-factor(ans,levels=0:(length(object$classLabels)-1),
-   labels=object$classLabels)
+  if(!multi){
+   ans<-factor(ans,levels=0:(length(object$classLabels)-1),
+    labels=object$classLabels)
+  }else{
+   ans<-data.frame(matrix(ans,ncol=length(object$classLabels),byrow=TRUE)>0)
+   object$classLabels->names(ans)
+  }
  }
 
  #Store the timing
@@ -172,9 +219,23 @@ predict.rFerns<-function(object,x,scores=FALSE,...){
 
 print.rFerns<-function(x,...){
  #Pretty-print rFerns output
- cat(sprintf("\n Forest of %d ferns of a depth %d.\n\n",
-  x$parameters["ferns"],x$parameters["depth"]))
- if(!is.null(x$oobErr)) cat(sprintf(" OOB error %0.2f%%;",tail(x$oobErr,1)*100))
- cat(" OOB confusion matrix:\n"); print(x$oobConfusionMatrix)
+ cat(sprintf("\n Forest of %d %sferns of a depth %d.\n\n",
+  x$parameters["ferns"],
+  ifelse(identical(x$type,"class-multi"),"multi-class ",""),
+  x$parameters["depth"]))
+ if(identical(x$type,"class-multi")){
+  if(!is.null(x$oobErr))
+   cat(sprintf(" OOB Hamming distance %0.3f for %d classes.\n",
+    tail(x$oobErr,1),
+    x$parameters["classes"]))
+   if(!is.null(x$oobPerClassError)){
+    cat(" Per-class error rates:\n");
+    print(x$oobPerClassError)
+   }
+ }else{
+  if(!is.null(x$oobErr))
+   cat(sprintf(" OOB error %0.2f%%;",tail(x$oobErr,1)*100))
+  cat(" OOB confusion matrix:\n"); print(x$oobConfusionMatrix)
+ }
  if(any(is.na(x$oobScores))) cat(" Note: forest too small to provide good OOB approx.\n")
 }
