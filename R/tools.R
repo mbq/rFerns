@@ -1,3 +1,13 @@
+#    Additional rFerns R code
+#
+#    Copyright 2011-2016 Miron B. Kursa
+#
+#    This file is part of rFerns R package.
+#
+#rFerns is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+#rFerns is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License along with rFerns. If not, see http://www.gnu.org/licenses/.
+
 #' Merge two random ferns models
 #'
 #' This function combines two compatible (same decision, same training data structure and same depth) models into a single ensemble.
@@ -106,26 +116,30 @@ merge.rFerns<-function(x,y,dropModel=FALSE,ignoreObjectConsistency=FALSE,trueY=N
 
  #Importance
  if(!is.null(x$importance)&&!is.null(y$importance)){
-  mergeWeight<-c(x$parameters["ferns"],y$parameters["ferns"]);
-  mergeWeight<-mergeWeight/sum(mergeWeight);
   ans$importance<-x$importance;
-  if(!is.null(ans$importance$MeanScoreLoss)&&!is.null(y$importance$MeanScoreLoss)){
-   ans$importance$MeanScoreLoss<-
-    mergeWeight[1]*x$importance$MeanScoreLoss+
-    mergeWeight[2]*y$importance$MeanScoreLoss;
-  }else{
-   ans$importance$MeanScoreLoss<-NULL;
-  }
   if(!is.null(ans$importance$Tries)&&!is.null(y$importance$Tries)){
    ans$importance$Tries<-x$importance$Tries+y$importance$Tries;
   }else{
    ans$importance$Tries<-NULL;
   }
-  if(!is.null(ans$importance$Shadow)&&!is.null(y$importance$Shadow)&&identical(x$consistentSeed,y$consistentSeed)){
-   ans$importance$Shadow<-
-    mergeWeight[1]*x$importance$Shadow+
-    mergeWeight[2]*y$importance$Shadow;
+  if(!is.null(ans$importance$MeanScoreLoss)&&!is.null(y$importance$MeanScoreLoss)){
+   ans$importance$MeanScoreLoss<-
+    (with(x$importance,MeanScoreLoss*Tries)+
+     with(y$importance,MeanScoreLoss*Tries))/ans$importance$Tries;
   }else{
+   ans$importance$MeanScoreLoss<-NULL;
+  }
+  if(identical(x$consistentSeed,y$consistentSeed)&&!is.null(x$consistentSeed)){
+   ans$consistentSeed<-x$consistentSeed;
+   if(!is.null(ans$importance$Shadow)&&!is.null(y$importance$Shadow)){
+    ans$importance$Shadow<-
+     (with(x$importance,Shadow*Tries)+
+      with(y$importance,Shadow*Tries))/ans$importance$Tries;
+   }else{
+    ans$importance$Shadow<-NULL;
+   }
+  }else{
+   ans$consistentSeed<-NULL; #Redundant
    ans$importance$Shadow<-NULL;
   }
   if(!is.null(ans$importance$Hits)&&!is.null(y$importance$Hits)&&identical(x$consistentSeed,y$consistentSeed)){

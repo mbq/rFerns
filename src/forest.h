@@ -1,6 +1,6 @@
 /*   Code handling fern ensembles -- creation, prediction, OOB, accuracy...
 
-     Copyright 2011-2015 Miron B. Kursa
+     Copyright 2011-2016 Miron B. Kursa
 
      This file is part of rFerns R package.
 

@@ -1,3 +1,9 @@
+Changes in 2.0.1:
+ - Fixed bug in merge.rFerns code, causing merged importance
+ scores to be wrong, especially after merging very small ensembles.
+ - Fixed memory protection bug triggering rare segmentation faults
+ in the R's GC, often long after the rFerns model was completed.
+
 Changes in 2.0.0:
  - Shadow importance.
  - Roxygen documentation.

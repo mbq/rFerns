@@ -1,6 +1,6 @@
 /*   R frontend to C code
 
-     Copyright 2011-2015 Miron B. Kursa
+     Copyright 2011-2016 Miron B. Kursa
 
      This file is part of rFerns R package.
 
@@ -82,6 +82,9 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
   Q.consSeed=0;
  }
 
+ //Start composing answer
+ SEXP sAns; PROTECT(sAns=allocVector(VECSXP,5));
+
  //Allocating fern forest; the whole space is controlled by R
  ferns ferns;
  SEXP sfSplitAtts=R_NilValue;
@@ -103,9 +106,6 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
 
  //Fire the code
  model *M=makeModel(X,nAtt,Y,nObj,&ferns,&Q,_R);
-
- //Start composing answer
- SEXP sAns; PROTECT(sAns=allocVector(VECSXP,5));
 
  //Saving forest
  if(Q.holdForest){
@@ -133,6 +133,8 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
   setAttrib(sModel,R_NamesSymbol,sModelNames);
   SET_VECTOR_ELT(sAns,0,sModel);
   UNPROTECT(6);
+  //UPs: sModelNames, sModel, sfThreInt, sfThreReal, sfSplitAtts, sfScores
+  //Left: sAns
  }else{
   SET_VECTOR_ELT(sAns,0,R_NilValue);
  }
@@ -155,6 +157,8 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
   setAttrib(sOobScores,R_DimSymbol,sOobDim);
   SET_VECTOR_ELT(sAns,1,sOobScores);
   UNPROTECT(2);
+  //UPs: sOobScores, sOobDim
+  //Left: sAns
 
   if(!multi){
    //Do actual voting on this matrix; push NA for never-oobs and
@@ -169,6 +173,8 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
 
    SET_VECTOR_ELT(sAns,4,sOobPreds);
    UNPROTECT(1);
+   //UPs: sOobPreds
+   //Left: sAns
   }else{
    SET_VECTOR_ELT(sAns,4,R_NilValue);
   }
@@ -184,6 +190,8 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
    tmp[e]=M->oobErr[e];
   SET_VECTOR_ELT(sAns,2,sOobErr);
   UNPROTECT(1);
+  //UPs: sOobErr
+  //Left: sAns
  }else{
   SET_VECTOR_ELT(sAns,2,R_NilValue);
  }
@@ -209,6 +217,8 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
   }
   SET_VECTOR_ELT(sAns,3,sImp);
   UNPROTECT(1);
+  //UPs: sImp, one or another
+  //Left: sAns
  }else{
   SET_VECTOR_ELT(sAns,3,R_NilValue);
  }
@@ -223,6 +233,8 @@ SEXP random_ferns(SEXP sAttributes,SEXP sDecision,SEXP sD,SEXP sNumFerns,SEXP sC
  SET_STRING_ELT(sAnsNames,4,mkChar("oobPreds"));
  setAttrib(sAns,R_NamesSymbol,sAnsNames);
  UNPROTECT(2);
+ //UPs: sAnsNames, sAns
+ //Left: nothing
 
  killModel(M);
  return(sAns);

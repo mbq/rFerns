@@ -1,4 +1,4 @@
-all: testgprof test testslow testllvm testllvm3 testllvmm
+all: testgprof test testslow testmulti testllvm testllvm3 testllvmm
 
 testllvm3: test.c ../src/fern.h ../src/tools.h ../src/forest.h iris.h
 	clang -o $@ $< -lm -O3 -g
@@ -14,6 +14,9 @@ testgprof: test.c ../src/fern.h ../src/tools.h ../src/forest.h iris.h
 
 test: test.c ../src/fern.h ../src/tools.h ../src/forest.h iris.h
 	gcc -o $@ $< --std=c99 -lm -O3 -g
+
+testmulti: test-multi.c ../src/fern.h ../src/tools.h ../src/forest.h iris.h
+	gcc -o $@ $< --std=c99 -lm -g
 
 testsse: test.c ../src/fern.h ../src/tools.h ../src/forest.h iris.h
 	gcc -o $@ $< --std=c99 -lm -O3 -g -ftree-vectorize -msse2 -ftree-vectorizer-verbose=5
