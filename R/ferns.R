@@ -65,7 +65,7 @@ rFerns.matrix<-function(x,y,...){
 #' It should be set to the same value in two merged models to make shadow importance meaningful.
 #' @param ... For formula and matrix methods, a place to state parameters to be passed to default method.
 #' For the print method, arguments to be passed to \code{print}.
-#' @return An object of class \code{rFerns}, which is a list with the  following components:
+#' @return An object of class \code{rFerns}, which is a list with the following components:
 #' \item{model}{The built model; \code{NULL} if \code{saveForest} was \code{FALSE}.}
 #' \item{oobErr}{OOB approximation of accuracy.
 #' Ignores never-OOB-tested objects (see oobScores element).}
