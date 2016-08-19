@@ -22,8 +22,5 @@ How to use
 
 Quite fresh version should be on [CRAN](http://cran.r-project.org/web/packages/rFerns/index.html); see the R docs for more.
 
-If you want to compile R package, fire `updpak.sh` and then execute `R CMD INSTALL rFerns_x.y.z.tar.gz`.
-This will build `roxygen2` documentation and fire `testthat2` tests (both of those packages, as well as `devtools`, should be installed; note that `devtools::install_github` will not work).
-
 If you want to use it / test it apart from R, it is quite possible -- consult `side_src/test.c` to see how this may work.
 Yet don't expect that this will ever become a standalone library.

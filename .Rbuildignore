@@ -1,0 +1,7 @@
+.git
+.gitignore
+README.md
+tests
+side_src
+*.o
+*.so
