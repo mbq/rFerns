@@ -1,0 +1,4 @@
+man/
+NAMESPACE
+src/*.o
+src/*.so
