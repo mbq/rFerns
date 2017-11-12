@@ -105,7 +105,7 @@ rFerns.matrix<-function(x,y,...){
 #' rFerns(Species~.,data=iris,importance="shadow")->model
 #' print(model$imp)
 #' @export
-#' @useDynLib rFerns random_ferns random_ferns_predict
+#' @useDynLib rFerns, .registration=TRUE
 
 rFerns.default<-function(x,y,depth=5,ferns=1000,importance="none",reportErrorEvery=0,saveErrorPropagation=FALSE,saveForest=TRUE,consistentSeed=NULL,...){
  #Stop on bad input
