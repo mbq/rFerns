@@ -9,4 +9,4 @@ Description: An R implementation of the random ferns classifier by Ozuysal et
     approximation and importance measure.
 BugReports: https://github.com/mbq/rFerns/issues
 License: GPL-3
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
