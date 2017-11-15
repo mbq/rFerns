@@ -48,4 +48,3 @@ head(predict(model,scores=TRUE))
 \author{
 Miron B. Kursa
 }
-

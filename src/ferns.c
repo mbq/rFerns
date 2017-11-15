@@ -13,6 +13,8 @@
 #include <Rdefines.h>
 #include <Rinternals.h>
 #include <R_ext/Utils.h>
+#include <R_ext/Rdynload.h>
+#include <R_ext/Visibility.h> 
 
 #define PRINT Rprintf
 #define IN_R 7
@@ -284,3 +286,17 @@ SEXP random_ferns_predict(SEXP sAttributes,SEXP sModel,SEXP sD,SEXP sNumFerns,SE
   return(sAns);
  }
 }
+
+#define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
+static const R_CallMethodDef R_CallDef[]={
+ CALLDEF(random_ferns,9),
+ CALLDEF(random_ferns_predict,7),
+ {NULL,NULL,0}
+};
+
+void attribute_visible R_init_rFerns(DllInfo *dll){
+ R_registerRoutines(dll,NULL,R_CallDef,NULL,NULL);
+ R_useDynamicSymbols(dll,FALSE);
+ R_forceSymbols(dll,TRUE);
+}
+  

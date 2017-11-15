@@ -69,4 +69,3 @@ print(modelAB);
 \author{
 Miron B. Kursa
 }
-

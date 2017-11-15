@@ -1,12 +1,10 @@
 Package: rFerns
 Type: Package
 Title: Random Ferns Classifier
-Version: 2.0.2
+Version: 2.0.3
 Author: Miron B. Kursa
 Maintainer: Miron B. Kursa <M.Kursa@icm.edu.pl>
-Description: An R implementation of the random ferns classifier by Ozuysal et
-    al., modified for generic and multi-label classification and featuring OOB error
-    approximation and importance measure.
+Description: An R implementation of the random ferns classifier by Ozuysal, Calonder, Lepetit and Fua (2009) <doi:10.1109/TPAMI.2009.23>, modified for generic and multi-label classification and featuring OOB error approximation and importance measure as introduced in Kursa (2014) <doi:10.18637/jss.v061.i10>.
 BugReports: https://github.com/mbq/rFerns/issues
 License: GPL-3
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

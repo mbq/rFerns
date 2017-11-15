@@ -42,7 +42,9 @@ names(noisyIris)[5:8]<-sprintf("Nonsense\%d",1:4)
 #Execute selection
 naiveWrapper(noisyIris,iris$Species,iterations=50,ferns=20,size=8)
 }
+\references{
+Kursa MB (2017). \emph{Efficient all relevant feature selection with random ferns}. In: Kryszkiewicz M., Appice A., Slezak D., Rybinski H., Skowron A., Ras Z. (eds) Foundations of Intelligent Systems. ISMIS 2017. Lecture Notes in Computer Science, vol 10352. Springer, Cham.
+}
 \author{
 Miron B. Kursa
 }
-
