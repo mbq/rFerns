@@ -1,3 +1,7 @@
+Changes in 2.0.3:
+ - Registration of native routines.
+ - Documentation updates.
+
 Changes in 2.0.2:
  - Added a wrapper for performing feature selection using shadow
  importance.

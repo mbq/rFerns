@@ -27,6 +27,7 @@
 #' \item{timeTaken}{Time of computation.}
 #' \item{params}{Copies of algorithm parameters, \code{iterations}, \code{depth}, \code{ferns} and \code{size}, as a named vector.}
 #' @author Miron B. Kursa
+#' @references Kursa MB (2017). \emph{Efficient all relevant feature selection with random ferns}. In: Kryszkiewicz M., Appice A., Slezak D., Rybinski H., Skowron A., Ras Z. (eds) Foundations of Intelligent Systems. ISMIS 2017. Lecture Notes in Computer Science, vol 10352. Springer, Cham.
 #' @examples
 #' set.seed(77);
 #' #Fetch Iris data
