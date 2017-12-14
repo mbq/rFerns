@@ -21,10 +21,12 @@
 #' @param depth The depth of the ferns; must be in 1--16 range. Note that time and memory requirements scale with \code{2^depth}.
 #' @param ferns Number of ferns to be build in each sub-model. This should be a small number, around 3-5 times \code{size}.
 #' @param size Number of attributes considered by each sub-model.
+#' @param saveHistory Should weight history be stored.
 #' @return An object of class \code{naiveWrapper}, which is a list with the following components:
 #' \item{found}{Names of all selected attributes.}
 #' \item{weights}{Vector of weights indicating the confidence that certain feature is relevant.}
 #' \item{timeTaken}{Time of computation.}
+#' \item{weightHistory}{History of weights over all iterations, present if \code{saveHistory} was \code{TRUE}}
 #' \item{params}{Copies of algorithm parameters, \code{iterations}, \code{depth}, \code{ferns} and \code{size}, as a named vector.}
 #' @author Miron B. Kursa
 #' @references Kursa MB (2017). \emph{Efficient all relevant feature selection with random ferns}. In: Kryszkiewicz M., Appice A., Slezak D., Rybinski H., Skowron A., Ras Z. (eds) Foundations of Intelligent Systems. ISMIS 2017. Lecture Notes in Computer Science, vol 10352. Springer, Cham.
@@ -38,7 +40,7 @@
 #' #Execute selection
 #' naiveWrapper(noisyIris,iris$Species,iterations=50,ferns=20,size=8)
 #' @export
-naiveWrapper<-function(x,y,iterations=1000,depth=5,ferns=100,size=30){
+naiveWrapper<-function(x,y,iterations=1000,depth=5,ferns=100,size=30,saveHistory=FALSE){
 
  if(size>ncol(x)){
   size<-ncol(x);
@@ -48,9 +50,11 @@ naiveWrapper<-function(x,y,iterations=1000,depth=5,ferns=100,size=30){
 
  Sys.time()->b;
 
+ wh<-NULL
  weight<-rep(1,ncol(x)); names(weight)<-names(x);
  for(iter in 1:iterations){
   weight[weight<.1]<-.1;
+  if(saveHistory) cbind(wh,weight)->wh
   use<-sample(names(x),size,prob=weight/sum(weight));
   rFerns(x[,use,drop=FALSE],y,
    ferns=ferns,
@@ -70,6 +74,7 @@ naiveWrapper<-function(x,y,iterations=1000,depth=5,ferns=100,size=30){
   found=found,
   weight=weight,
   timeTaken=a-b,
+  weightHistory=wh,
   parameters=c(
    iterations=iterations,
    depth=depth,
