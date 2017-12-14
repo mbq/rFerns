@@ -21,6 +21,7 @@
 #' @param depth The depth of the ferns; must be in 1--16 range. Note that time and memory requirements scale with \code{2^depth}.
 #' @param ferns Number of ferns to be build in each sub-model. This should be a small number, around 3-5 times \code{size}.
 #' @param size Number of attributes considered by each sub-model.
+#' @param lambda Lambda parameter driving the re-weighting step of the method.
 #' @param saveHistory Should weight history be stored.
 #' @return An object of class \code{naiveWrapper}, which is a list with the following components:
 #' \item{found}{Names of all selected attributes.}
@@ -40,7 +41,7 @@
 #' #Execute selection
 #' naiveWrapper(noisyIris,iris$Species,iterations=50,ferns=20,size=8)
 #' @export
-naiveWrapper<-function(x,y,iterations=1000,depth=5,ferns=100,size=30,saveHistory=FALSE){
+naiveWrapper<-function(x,y,iterations=1000,depth=5,ferns=100,size=30,lambda=5,saveHistory=FALSE){
 
  if(size>ncol(x)){
   size<-ncol(x);
@@ -61,12 +62,12 @@ naiveWrapper<-function(x,y,iterations=1000,depth=5,ferns=100,size=30,saveHistory
    depth=depth,
    imp="sha")$importance->ii;
   found<-rownames(ii)[ii$MeanScoreLoss>max(ii$Shadow)];
-  weight[found]<-weight[found]+5;
-  weight[use[!(use%in%found)]]<-weight[use[!(use%in%found)]]-10;
+  weight[found]<-weight[found]+lambda;
+  weight[use[!(use%in%found)]]<-weight[use[!(use%in%found)]]-2*lambda;
  }
  weight[weight<.1]<-.1;
 
- found<-names(weight)[weight>max(c(weight,33))/2];
+ found<-names(weight)[weight>max(c(weight,2+6*lambda))/2];
 
  Sys.time()->a;
 
