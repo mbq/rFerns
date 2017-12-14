@@ -5,7 +5,7 @@
 \title{Naive feature selection method utilising the rFerns shadow imporance}
 \usage{
 naiveWrapper(x, y, iterations = 1000, depth = 5, ferns = 100, size = 30,
-  saveHistory = FALSE)
+  lambda = 5, saveHistory = FALSE)
 }
 \arguments{
 \item{x}{Data frame containing attributes; must have unique names and contain only numeric, integer or (ordered) factor columns.
@@ -20,6 +20,8 @@ Factors must have less than 31 levels. No \code{NA} values are permitted.}
 \item{ferns}{Number of ferns to be build in each sub-model. This should be a small number, around 3-5 times \code{size}.}
 
 \item{size}{Number of attributes considered by each sub-model.}
+
+\item{lambda}{Lambda parameter driving the re-weighting step of the method.}
 
 \item{saveHistory}{Should weight history be stored.}
 }
